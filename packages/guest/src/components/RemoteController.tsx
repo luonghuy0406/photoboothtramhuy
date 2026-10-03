@@ -9,7 +9,7 @@ import {
   saveFirebaseConfig,
   getFirebaseConfig,
 } from '../firebase';
-import type { FirebaseConfig, FirebaseSessionDoc } from '@photobooth/shared';
+import type { FirebaseConfig, FirebaseSessionDoc } from '../types';
 
 interface PhotoInfo {
   id: string;

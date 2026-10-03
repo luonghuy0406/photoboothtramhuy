@@ -8,7 +8,7 @@ import {
   type Firestore,
   type Unsubscribe,
 } from 'firebase/firestore';
-import { DEFAULT_FIREBASE_CONFIG, type FirebaseConfig, type FirebaseSessionDoc } from '@photobooth/shared';
+import { DEFAULT_FIREBASE_CONFIG, type FirebaseConfig, type FirebaseSessionDoc } from './types';
 
 const metaEnv = (import.meta as any).env || {};
 
