@@ -295,8 +295,12 @@ export function RemoteController({ sessionId }: { sessionId: string }) {
     );
   }
 
-  // Thank-you / Completed screen
-  if (isFinished) {
+  const displayPhotoUrl = status?.stripUrl || status?.photo?.originalUrl;
+  const hasPhoto = !!displayPhotoUrl;
+  const isCountingDown = localCountdown !== null || status?.state === 'COUNTDOWN';
+
+  // Thank-you screen ONLY if there is no photo
+  if (isFinished && !hasPhoto) {
     return (
       <div className="remote-container">
         <header className="remote-header">
@@ -308,22 +312,11 @@ export function RemoteController({ sessionId }: { sessionId: string }) {
         <div className="remote-finished-card">
           <div className="finished-heart">💕</div>
           <h2>Cảm ơn bạn!</h2>
-          <p>Ảnh kỷ niệm đã được lưu thành công. Chúc bạn có một buổi tiệc thật vui vẻ và đáng nhớ cùng cô dâu chú rể!</p>
-
-          <button
-            className="remote-new-session-btn"
-            onClick={() => window.location.reload()}
-          >
-            Chụp lượt mới 📸
-          </button>
+          <p>Lượt chụp đã kết thúc. Chúc bạn có một buổi tiệc thật vui vẻ và đáng nhớ cùng cô dâu chú rể!</p>
         </div>
       </div>
     );
   }
-
-  const isReady = status?.state === 'READY' && (status.stripUrl || status.photo);
-  const isCountingDown = localCountdown !== null || status?.state === 'COUNTDOWN';
-  const displayPhotoUrl = status?.stripUrl || status?.photo?.originalUrl;
 
   return (
     <div className="remote-container">
@@ -355,11 +348,15 @@ export function RemoteController({ sessionId }: { sessionId: string }) {
           </div>
         )}
 
-        {/* State 2: PHOTO READY (View & Download) */}
-        {!isCountingDown && isReady && displayPhotoUrl && (
+        {/* State 2: PHOTO READY (View & Download) - PRESERVED PERMANENTLY */}
+        {!isCountingDown && hasPhoto && displayPhotoUrl && (
           <div className="remote-result-card">
             <div className="result-header">
-              <span className="result-badge">✨ ẢNH CỦA BẠN ĐÃ XONG!</span>
+              <span className="result-badge">
+                {isFinished || status?.state === 'FINISHED'
+                  ? '✨ ẢNH CỦA BẠN (ĐÃ LƯU TRỮ VĨNH VIỄN)'
+                  : '✨ ẢNH CỦA BẠN ĐÃ XONG!'}
+              </span>
             </div>
 
             <div className="result-image-wrapper">
@@ -369,6 +366,10 @@ export function RemoteController({ sessionId }: { sessionId: string }) {
                 className="result-image"
               />
             </div>
+
+            <p style={{ fontSize: '0.82rem', color: '#aaa', margin: '4px 0' }}>
+              💡 Bấm nút tải bên dưới hoặc <strong>nhấn giữ vào ảnh</strong> để lưu vào album điện thoại
+            </p>
 
             {downloadSuccess && (
               <div className="download-success-toast">
@@ -385,20 +386,37 @@ export function RemoteController({ sessionId }: { sessionId: string }) {
                 {isDownloading ? '⏳ Đang tải xuống...' : '📥 Tải ảnh về điện thoại (Gốc)'}
               </button>
 
-              <div className="action-row">
-                <button className="remote-retake-btn" onClick={handleRetake}>
-                  🔄 Chụp lại
-                </button>
-                <button className="remote-finish-btn" onClick={handleFinish}>
-                  ✨ Hoàn tất
-                </button>
-              </div>
+              {(!isFinished && status?.state !== 'FINISHED') ? (
+                <div className="action-row">
+                  <button className="remote-retake-btn" onClick={handleRetake}>
+                    🔄 Chụp lại
+                  </button>
+                  <button className="remote-finish-btn" onClick={handleFinish}>
+                    ✨ Hoàn tất
+                  </button>
+                </div>
+              ) : (
+                <div style={{ marginTop: '0.6rem', textAlign: 'center' }}>
+                  <p style={{ color: '#d4af37', fontSize: '0.9rem', marginBottom: '8px' }}>
+                    💕 Cảm ơn bạn đã chụp ảnh cùng Huy &amp; Trâm!
+                  </p>
+                  <button
+                    className="remote-new-session-btn"
+                    style={{ width: '100%', padding: '0.8rem' }}
+                    onClick={() => {
+                      alert('Vui lòng nhìn lên màn hình máy tính và quét mã QR mới để chụp lượt tiếp theo nhé!');
+                    }}
+                  >
+                    Chụp lượt mới (Quét mã trên máy tính) 📸
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {/* State 3: READY TO SHOOT (Shutter Button) */}
-        {!isCountingDown && !isReady && (
+        {!isCountingDown && !hasPhoto && (
           <div className="remote-shutter-card">
             <div className="instruction-box">
               <p className="instruction-lead">Bạn đã sẵn sàng chưa?</p>

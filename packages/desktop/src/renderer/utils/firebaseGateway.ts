@@ -2,6 +2,7 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import {
   getFirestore,
   doc,
+  getDoc,
   setDoc,
   updateDoc,
   onSnapshot,
@@ -91,7 +92,8 @@ export function initFirebaseGateway(): {
 }
 
 /**
- * Creates or resets a session document in Firestore
+ * Creates or resets a session document in Firestore safely
+ * NEVER overwrites existing photoUrl or FINISHED state
  */
 export async function createCloudSession(
   sessionId: string,
@@ -102,20 +104,53 @@ export async function createCloudSession(
 
   try {
     const docRef = doc(db, 'sessions', sessionId);
-    await setDoc(docRef, {
-      id: sessionId,
-      state: 'WAITING_GUEST',
-      coupleName: meta.coupleName || 'Huy & Trâm',
-      eventName: meta.eventName || 'Wedding Photobooth',
-      eventDate: meta.eventDate || '15.03.2025',
-      photoUrl: null,
-      thumbnailUrl: null,
-      createdAt: Date.now(),
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      // If session is already completed or has a photo, keep it permanently intact!
+      if (data?.photoUrl || data?.state === 'READY' || data?.state === 'FINISHED') {
+        return true;
+      }
+    }
+
+    await setDoc(
+      docRef,
+      {
+        id: sessionId,
+        state: 'WAITING_GUEST',
+        coupleName: meta.coupleName || 'Huy & Trâm',
+        eventName: meta.eventName || 'Wedding Photobooth',
+        eventDate: meta.eventDate || '15.03.2025',
+        photoUrl: null,
+        thumbnailUrl: null,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (err) {
+    console.error('Error creating cloud session:', err);
+    return false;
+  }
+}
+
+/**
+ * Marks cloud session FINISHED while strictly preserving photoUrl
+ */
+export async function markCloudSessionFinished(sessionId: string): Promise<boolean> {
+  const { db } = initFirebaseGateway();
+  if (!db) return false;
+
+  try {
+    const docRef = doc(db, 'sessions', sessionId);
+    await updateDoc(docRef, {
+      state: 'FINISHED',
       updatedAt: Date.now(),
     });
     return true;
   } catch (err) {
-    console.error('Error creating cloud session:', err);
+    console.error('Error marking cloud session finished:', err);
     return false;
   }
 }

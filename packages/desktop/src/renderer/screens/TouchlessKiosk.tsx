@@ -9,6 +9,7 @@ import {
   listenToCloudSession,
   uploadPhotoToFirebaseStorage,
   markCloudSessionReady,
+  markCloudSessionFinished,
   saveStoredFirebaseConfig,
   getStoredFirebaseConfig,
 } from '../utils/firebaseGateway';
@@ -41,6 +42,13 @@ export function TouchlessKiosk() {
   const [adminOpen, setAdminOpen] = useState<boolean>(false);
   const [cameraStatus, setCameraStatus] = useState<string>('connected');
   const [qrMode, setQrMode] = useState<'capture' | 'wifi'>('capture');
+  const [autoAdvanceSeconds, setAutoAdvanceSeconds] = useState<number | null>(null);
+
+  const isAdvancingRef = useRef<boolean>(false);
+  const countdownRef = useRef<number | null>(null);
+  countdownRef.current = countdown;
+  const capturedPhotoUrlRef = useRef<string | null>(null);
+  capturedPhotoUrlRef.current = capturedPhotoUrl;
 
   // Vercel & Firebase Gateway states
   const [vercelDomain, setVercelDomain] = useState<string>(() => {
@@ -84,6 +92,8 @@ export function TouchlessKiosk() {
     let isMounted = true;
 
     const fetchSession = async () => {
+      if (isAdvancingRef.current) return;
+
       try {
         const res = await fetch(`${serverUrl}/api/active-session`);
         const json = await res.json();
@@ -116,14 +126,14 @@ export function TouchlessKiosk() {
           // Update status text based on remote state
           if (data.state === 'WAITING_GUEST') {
             setStatusMessage('📱 Hãy quét mã QR để bắt đầu chụp ảnh');
-            setCapturedPhotoUrl(null);
-            setCountdown(null);
+            if (capturedPhotoUrl) setCapturedPhotoUrl(null);
+            if (countdown !== null) setCountdown(null);
           } else if (data.state === 'GUEST_CONNECTED') {
             setStatusMessage('✨ Điện thoại đã kết nối! Hãy tạo dáng và bấm chụp trên điện thoại nhé');
             setQrMode('capture');
           } else if (data.state === 'COUNTDOWN' && countdown === null && !capturedPhotoUrl) {
             startCountdown(data.sessionId);
-          } else if (data.state === 'READY' && data.stripUrl) {
+          } else if (data.state === 'READY' && data.stripUrl && !capturedPhotoUrl && !isAdvancingRef.current) {
             setCapturedPhotoUrl(data.stripUrl);
             setStatusMessage('💕 Ảnh đã được gửi về điện thoại của bạn!');
           }
@@ -148,7 +158,7 @@ export function TouchlessKiosk() {
     const { isConfigured } = initFirebaseGateway();
     if (!isConfigured) return;
 
-    // Create / ensure cloud session exists
+    // Create / ensure cloud session exists safely
     createCloudSession(activeSession.sessionId, {
       coupleName: 'Huy & Trâm',
       eventName: 'Huy & Trâm Wedding Photobooth',
@@ -159,7 +169,7 @@ export function TouchlessKiosk() {
       if (cloudDoc.state === 'GUEST_CONNECTED') {
         setStatusMessage('✨ Điện thoại đã kết nối qua Firebase Cloud Gateway!');
         setQrMode('capture');
-      } else if (cloudDoc.state === 'COUNTDOWN' && countdown === null && !capturedPhotoUrl) {
+      } else if (cloudDoc.state === 'COUNTDOWN' && countdownRef.current === null && !capturedPhotoUrlRef.current) {
         startCountdown(activeSession.sessionId);
       } else if (cloudDoc.state === 'FINISHED') {
         advanceToNextSession();
@@ -169,9 +179,35 @@ export function TouchlessKiosk() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [activeSession?.sessionId, countdown, capturedPhotoUrl]);
+  }, [activeSession?.sessionId]);
 
-  // 4. Countdown & Capture sequence
+  // 4. Auto-advance countdown timer when photo is captured and displayed
+  useEffect(() => {
+    if (!capturedPhotoUrl) {
+      setAutoAdvanceSeconds(null);
+      return;
+    }
+
+    let secondsLeft = 8;
+    setAutoAdvanceSeconds(secondsLeft);
+
+    const timer = setInterval(() => {
+      secondsLeft -= 1;
+      if (secondsLeft > 0) {
+        setAutoAdvanceSeconds(secondsLeft);
+      } else {
+        clearInterval(timer);
+        setAutoAdvanceSeconds(null);
+        advanceToNextSession();
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [capturedPhotoUrl]);
+
+  // 5. Countdown & Capture sequence
   const startCountdown = (sessionId: string) => {
     setCountdown(3);
     sound.playBeep(false);
@@ -233,27 +269,26 @@ export function TouchlessKiosk() {
         const { isConfigured } = initFirebaseGateway();
         if (isConfigured) {
           setStatusMessage('☁️ Đang đồng bộ ảnh về điện thoại...');
-          let cloudUrl: string | null = null;
           try {
-            // Upload to Firebase Storage
-            cloudUrl = await uploadPhotoToFirebaseStorage(sessionId, stripBase64 || localStripUrl);
-          } catch (e) {
-            console.warn('Firebase Storage upload error:', e);
-          }
+            let cloudUrl: string | null = null;
+            try {
+              // Upload to Firebase Storage
+              cloudUrl = await uploadPhotoToFirebaseStorage(sessionId, stripBase64 || localStripUrl);
+            } catch (e) {
+              console.warn('Firebase Storage upload error:', e);
+            }
 
-          // CRITICAL: Use public HTTPS Cloud URL or direct Base64 Data URL.
-          // NEVER pass local LAN IP (192.168.1.9) to phones accessing via 4G/Vercel!
-          const finalPhotoUrl = cloudUrl || stripBase64;
-          if (finalPhotoUrl) {
-            await markCloudSessionReady(sessionId, finalPhotoUrl);
-            setStatusMessage('💕 Ảnh đã gửi về điện thoại của bạn!');
+            // CRITICAL: Use public HTTPS Cloud URL or direct Base64 Data URL.
+            // NEVER pass local LAN IP (192.168.1.9) to phones accessing via 4G/Vercel!
+            const finalPhotoUrl = cloudUrl || stripBase64;
+            if (finalPhotoUrl) {
+              await markCloudSessionReady(sessionId, finalPhotoUrl);
+              setStatusMessage('💕 Ảnh đã gửi về điện thoại của bạn!');
+            }
+          } catch (cloudErr) {
+            console.warn('Cloud sync error:', cloudErr);
           }
         }
-
-        // Auto-advance after 14s
-        setTimeout(() => {
-          advanceToNextSession();
-        }, 14000);
       }
     } catch (err) {
       console.error('Capture error:', err);
@@ -264,16 +299,67 @@ export function TouchlessKiosk() {
   };
 
   const advanceToNextSession = async () => {
+    if (isAdvancingRef.current) return;
+    isAdvancingRef.current = true;
+
+    const oldSessionId = activeSession?.sessionId;
+
+    // Immediately reset UI to prepare for next guest
+    setAutoAdvanceSeconds(null);
+    setCapturedPhotoUrl(null);
+    setCountdown(null);
+    setStatusMessage('Đang chuẩn bị lượt chụp mới...');
+
     try {
-      setCapturedPhotoUrl(null);
-      setCountdown(null);
+      // 1. Advance on local server (creates new session in SQLite, marks old FINISHED)
       const res = await fetch(`${serverUrl}/api/sessions/next`, { method: 'POST' });
       const json = await res.json();
       if (json.success && json.data) {
-        setActiveSession(json.data);
+        const nextData: ActiveSessionData = json.data;
+        setActiveSession(nextData);
+
+        // 2. Firebase Cloud Gateway sync (mark old FINISHED, create new WAITING_GUEST)
+        const { isConfigured } = initFirebaseGateway();
+        if (isConfigured) {
+          if (oldSessionId) {
+            try {
+              await markCloudSessionFinished(oldSessionId);
+            } catch (e) {
+              console.warn('Could not mark old cloud session finished:', e);
+            }
+          }
+
+          try {
+            await createCloudSession(nextData.sessionId, {
+              coupleName: 'Huy & Trâm',
+              eventName: 'Huy & Trâm Wedding Photobooth',
+            });
+          } catch (e) {
+            console.warn('Could not create new cloud session:', e);
+          }
+        }
+
+        // 3. Immediately regenerate Vercel QR code for new session
+        if (vercelDomain.trim()) {
+          const cleanDomain = vercelDomain.trim().replace(/\/$/, '');
+          const targetUrl = `${cleanDomain}/remote/${nextData.sessionId}`;
+          try {
+            const vQr = await QRCode.toDataURL(targetUrl, { width: 400, margin: 2 });
+            setVercelQrCode(vQr);
+          } catch (e) {
+            console.error('Vercel QR generate error:', e);
+          }
+        }
+
+        setStatusMessage('📱 Hãy quét mã QR để bắt đầu chụp ảnh');
       }
     } catch (e) {
-      console.error(e);
+      console.error('Failed to advance session:', e);
+      setStatusMessage('📱 Hãy quét mã QR để bắt đầu chụp ảnh');
+    } finally {
+      setTimeout(() => {
+        isAdvancingRef.current = false;
+      }, 800);
     }
   };
 
@@ -356,13 +442,33 @@ export function TouchlessKiosk() {
         {/* Captured Photo Overlay when ready */}
         {capturedPhotoUrl && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="touchless-captured-preview"
           >
             <img src={capturedPhotoUrl} alt="Ảnh vừa chụp" className="captured-result-img" />
-            <div className="photo-sent-badge">
-              <span>📱 Đã gửi về điện thoại của bạn</span>
+
+            <div className="captured-preview-actions-overlay">
+              <div className="photo-sent-badge">
+                <span>📱 Đã gửi về điện thoại của bạn</span>
+              </div>
+
+              {autoAdvanceSeconds !== null && (
+                <div className="auto-advance-timer-card">
+                  <div className="auto-advance-clock">⏱️</div>
+                  <div className="auto-advance-info">
+                    <span className="auto-advance-label">LƯỢT TIẾP THEO BẮT ĐẦU SAU</span>
+                    <span className="auto-advance-seconds">{autoAdvanceSeconds}s</span>
+                  </div>
+                  <button
+                    className="auto-advance-skip-btn"
+                    onClick={advanceToNextSession}
+                    title="Bắt đầu ngay lượt chụp tiếp theo"
+                  >
+                    Chuyển lượt ngay ➔
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -508,7 +614,9 @@ export function TouchlessKiosk() {
         {/* Next session button */}
         {capturedPhotoUrl && (
           <button className="start-button next-guest-touchless-btn" onClick={advanceToNextSession}>
-            Lượt tiếp theo ➔
+            {autoAdvanceSeconds !== null
+              ? `Lượt tiếp theo (${autoAdvanceSeconds}s) ➔`
+              : 'Lượt tiếp theo ➔'}
           </button>
         )}
       </div>

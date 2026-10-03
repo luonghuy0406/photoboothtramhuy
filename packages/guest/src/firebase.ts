@@ -2,6 +2,7 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import {
   getFirestore,
   doc,
+  getDoc,
   onSnapshot,
   updateDoc,
   serverTimestamp,
@@ -107,6 +108,14 @@ export async function connectGuest(sessionId: string): Promise<boolean> {
   if (!db) return false;
   try {
     const sessionDocRef = doc(db, 'sessions', sessionId);
+    const snap = await getDoc(sessionDocRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      // If session is already finished or ready with a photo, keep it permanently intact!
+      if (data?.state === 'FINISHED' || data?.state === 'READY' || data?.photoUrl) {
+        return true;
+      }
+    }
     await updateDoc(sessionDocRef, {
       state: 'GUEST_CONNECTED',
       updatedAt: Date.now(),
