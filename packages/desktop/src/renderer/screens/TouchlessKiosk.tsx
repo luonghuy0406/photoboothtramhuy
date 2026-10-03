@@ -225,16 +225,29 @@ export function TouchlessKiosk() {
 
       if (procJson.success && procJson.data) {
         const localStripUrl = procJson.data.stripUrl;
-        setCapturedPhotoUrl(localStripUrl);
-        setStatusMessage('💕 Ảnh đã gửi về điện thoại của bạn!');
+        const stripBase64 = procJson.data.stripBase64;
+        setCapturedPhotoUrl(stripBase64 || localStripUrl);
+        setStatusMessage('💕 Ảnh đã chụp thành công!');
 
         // Upload to Firebase Storage & mark cloud doc READY (if cloud active)
         const { isConfigured } = initFirebaseGateway();
         if (isConfigured) {
-          setStatusMessage('☁️ Đang đồng bộ ảnh lên Firebase Cloud...');
-          const cloudUrl = await uploadPhotoToFirebaseStorage(sessionId, localStripUrl);
-          await markCloudSessionReady(sessionId, cloudUrl || localStripUrl);
-          setStatusMessage('💕 Ảnh đã đồng bộ lên điện thoại của bạn!');
+          setStatusMessage('☁️ Đang đồng bộ ảnh về điện thoại...');
+          let cloudUrl: string | null = null;
+          try {
+            // Upload to Firebase Storage
+            cloudUrl = await uploadPhotoToFirebaseStorage(sessionId, stripBase64 || localStripUrl);
+          } catch (e) {
+            console.warn('Firebase Storage upload error:', e);
+          }
+
+          // CRITICAL: Use public HTTPS Cloud URL or direct Base64 Data URL.
+          // NEVER pass local LAN IP (192.168.1.9) to phones accessing via 4G/Vercel!
+          const finalPhotoUrl = cloudUrl || stripBase64;
+          if (finalPhotoUrl) {
+            await markCloudSessionReady(sessionId, finalPhotoUrl);
+            setStatusMessage('💕 Ảnh đã gửi về điện thoại của bạn!');
+          }
         }
 
         // Auto-advance after 14s

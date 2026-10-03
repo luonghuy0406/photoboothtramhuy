@@ -3,6 +3,7 @@ import type { AppConfig } from '@photobooth/shared';
 import type Database from 'better-sqlite3';
 import { nanoid } from 'nanoid';
 import path from 'path';
+import fs from 'fs';
 import { createPhotoStrip } from '../services/imageProcessor.js';
 import { generateSessionQR, generateWifiQR } from '../services/qr.js';
 
@@ -323,11 +324,15 @@ export async function registerSessionRoutes(
            WHERE id = ?`
         ).run(stripUrlRelative, sessionId);
 
+        const stripBuffer = fs.readFileSync(stripOutputPath);
+        const stripBase64 = `data:image/jpeg;base64,${stripBuffer.toString('base64')}`;
+
         return {
           success: true,
           data: {
             sessionId,
             stripUrl: fullStripUrl,
+            stripBase64,
             downloadUrl: fullStripUrl,
             state: 'READY',
           },
