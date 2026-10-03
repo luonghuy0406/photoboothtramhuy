@@ -1,0 +1,673 @@
+:root {
+  --color-bg: #0d0d0f;
+  --color-surface: #18181c;
+  --color-surface-hover: #222228;
+  --color-gold: #d4af37;
+  --color-gold-light: #f7e07d;
+  --color-white: #ffffff;
+  --color-text: #f0f0f2;
+  --color-text-muted: #9999a6;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.gallery {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  min-height: 100vh;
+}
+
+.gallery-header {
+  text-align: center;
+  padding: 1.5rem 0 1rem;
+}
+
+.gallery-title {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  color: var(--color-gold);
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.04em;
+}
+
+.gallery-subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.guest-wifi-badge {
+  display: inline-block;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--color-gold-light);
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.strip-section {
+  margin: 1.5rem 0 2rem;
+  text-align: center;
+}
+
+.strip-container-mobile {
+  background: #111;
+  border-radius: 16px;
+  padding: 8px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  margin-bottom: 1rem;
+}
+
+.photo-strip {
+  max-width: 100%;
+  border-radius: 10px;
+  display: block;
+  cursor: pointer;
+}
+
+.download-strip-btn {
+  display: block;
+  width: 100%;
+  padding: 1.1rem;
+  background: linear-gradient(135deg, #f7e07d 0%, #d4af37 100%);
+  color: #121016;
+  border: none;
+  border-radius: 14px;
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.35);
+  transition: transform 0.15s ease;
+}
+.download-strip-btn:active {
+  transform: scale(0.98);
+}
+
+.photos-grid-heading {
+  font-size: 1.1rem;
+  color: var(--color-gold);
+  margin: 1.5rem 0 0.8rem;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.photo-card {
+  background: var(--color-surface);
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.photo-thumbnail {
+  width: 100%;
+  display: block;
+  cursor: pointer;
+  aspect-ratio: 3/2;
+  object-fit: cover;
+  transition: opacity 0.2s;
+}
+.photo-thumbnail:active {
+  opacity: 0.8;
+}
+
+.photo-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+}
+
+.photo-num {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.download-btn {
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--color-gold);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.download-btn:active {
+  background: rgba(212, 175, 55, 0.25);
+}
+
+.download-all-btn {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  background: #25232c;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: var(--color-gold);
+  border-radius: 14px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.download-all-btn:active {
+  transform: scale(0.98);
+}
+
+.photo-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 75vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.modal-actions button {
+  padding: 0.8rem 1.8rem;
+  border-radius: 10px;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modal-actions button:first-child {
+  background: var(--color-gold);
+  color: #121016;
+}
+.modal-actions button:last-child {
+  background: #333;
+  color: #fff;
+}
+
+.loading-view,
+.error-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid rgba(212, 175, 55, 0.2);
+  border-top-color: var(--color-gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1.2rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.error-view h2 {
+  color: var(--color-gold);
+  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
+}
+
+.error-view p {
+  color: var(--color-text-muted);
+  margin-bottom: 1.8rem;
+  line-height: 1.6;
+}
+
+.retry-btn {
+  padding: 0.9rem 2.2rem;
+  background: var(--color-gold);
+  color: #121016;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gallery-footer {
+  text-align: center;
+  padding: 2.5rem 0 1.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+.footer-sub {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* ========================================================
+   MOBILE REMOTE CONTROLLER & RECEIVER STYLES
+   ======================================================== */
+
+.remote-container {
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 1.5rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.remote-header {
+  padding-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.wedding-rings-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.remote-names {
+  font-family: var(--font-display);
+  font-size: 2.3rem;
+  color: var(--color-gold);
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.remote-subtitle {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+.remote-connection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: #2ecc71;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-top: 0.8rem;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #2ecc71;
+  box-shadow: 0 0 8px #2ecc71;
+  animation: pulse-green 1.5s infinite;
+}
+
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+}
+
+.remote-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+/* Shutter Card */
+.remote-shutter-card {
+  width: 100%;
+  background: #141418;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 24px;
+  padding: 2rem 1.2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.instruction-box .instruction-lead {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.4rem;
+}
+
+.instruction-box .instruction-sub {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.shutter-button-wrapper {
+  margin: 1rem 0;
+}
+
+.big-shutter-button {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+  border: 6px solid #23222a;
+  box-shadow: 0 0 35px rgba(212, 175, 55, 0.5), inset 0 2px 8px rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.big-shutter-button:active {
+  transform: scale(0.93);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+.shutter-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #121016;
+}
+
+.shutter-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.shutter-label {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.shutter-sub {
+  font-size: 0.75rem;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.remote-tip {
+  font-size: 0.8rem;
+  color: #a0a0b0;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 14px;
+  border-radius: 12px;
+  line-height: 1.4;
+}
+
+/* Countdown Card */
+.remote-countdown-card {
+  width: 100%;
+  background: #141418;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 24px;
+  padding: 2.5rem 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.remote-countdown-circle {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, rgba(20, 20, 24, 0.8) 70%);
+  border: 3px solid var(--color-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: countdown-pulse 1s infinite alternate;
+}
+
+@keyframes countdown-pulse {
+  from { transform: scale(0.96); box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+  to { transform: scale(1.05); box-shadow: 0 0 30px rgba(212, 175, 55, 0.6); }
+}
+
+.remote-countdown-number {
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--color-gold-light);
+}
+
+.countdown-prompt {
+  font-size: 1.4rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+.countdown-hint {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+}
+
+/* Result Card */
+.remote-result-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.result-badge {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold-light);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+
+.result-image-wrapper {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(212, 175, 55, 0.35);
+  background: #111;
+}
+
+.result-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.download-success-toast {
+  background: #27ae60;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.remote-download-btn {
+  width: 100%;
+  padding: 1.1rem;
+  background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%);
+  color: #121016;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.remote-download-btn:active {
+  transform: scale(0.98);
+}
+
+.action-row {
+  display: flex;
+  gap: 0.8rem;
+  width: 100%;
+}
+
+.remote-retake-btn {
+  flex: 1;
+  padding: 0.9rem;
+  background: #202026;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e0e0e6;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.remote-finish-btn {
+  flex: 1;
+  padding: 0.9rem;
+  background: #2a251a;
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold-light);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Finished Screen */
+.remote-finished-card {
+  background: #141418;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 24px;
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.finished-heart {
+  font-size: 3.5rem;
+}
+
+.remote-finished-card h2 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--color-gold);
+}
+
+.remote-finished-card p {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.remote-new-session-btn {
+  margin-top: 1rem;
+  padding: 0.9rem 2rem;
+  background: var(--color-gold);
+  color: #121016;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Remote Footer */
+.remote-footer {
+  padding-bottom: 1rem;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.remote-footer .sub-lan-info {
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: #555;
+}
+

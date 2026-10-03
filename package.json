@@ -1,0 +1,21 @@
+{
+  "name": "digital-wedding-photobooth",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.5.0"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0"
+  }
+}
